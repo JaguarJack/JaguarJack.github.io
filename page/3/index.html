@@ -130,7 +130,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-count">38</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -142,7 +142,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">32</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -183,6 +183,117 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://jaguarjack.github.io/2018/11/21/lumen-jwt/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/./images/avatar.jpg">
+      <meta itemprop="name" content="JaguarJack">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JaguarJack's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2018/11/21/lumen-jwt/" class="post-title-link" itemprop="url">Lumen 使用 Jwt 过程记录</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2018-11-20 22:58:24" itemprop="dateCreated datePublished" datetime="2018-11-20T22:58:24Z">2018-11-20</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-06-16 01:05:39" itemprop="dateModified" datetime="2021-06-16T01:05:39Z">2021-06-16</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">工具笔记</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>最近想搞一下前后端分离，所以就基于 Vue 想做一下基础的后台管理，后端就选用了 Lumen5.7.*，因为解决方案多，方便。认证就在此基础使用了 Json Web Token(JWT)。这里记录一些使用过程。</p>
+<h3 id="下载-Jwt-包"><a href="#下载-Jwt-包" class="headerlink" title="下载 Jwt 包"></a>下载 Jwt 包</h3><p>修改 <code>composer.json</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;require&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;tymon/jwt-auth&quot;</span>: <span class="string">&quot;1.0.*&quot;</span></span><br><span class="line">    &#125;,</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>composer update</p>
+</blockquote>
+<h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><p>修改 <code>bootstrap</code>  目录下 <code>app.php</code> 文件</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"> <span class="variable">$app</span>-&gt;withFacades();</span><br><span class="line"></span><br><span class="line"> <span class="variable">$app</span>-&gt;withEloquent();</span><br><span class="line"></span><br><span class="line"><span class="variable">$app</span>-&gt;routeMiddleware([</span><br><span class="line">     <span class="string">&#x27;auth&#x27;</span> =&gt; App\Http\Middleware\Authenticate::class,</span><br><span class="line"> ]);</span><br><span class="line"> <span class="variable">$app</span>-&gt;register(App\Providers\AppServiceProvider::class);</span><br><span class="line"> <span class="variable">$app</span>-&gt;register(App\Providers\AuthServiceProvider::class);</span><br></pre></td></tr></table></figure>
+
+<p>打开这五行注释。然后进入到 AppServiceProvider 服务注入文件, 注册 Jwt 服务</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">register</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Register Jwt Service</span></span><br><span class="line">    <span class="keyword">$this</span>-&gt;app-&gt;register(\Tymon\JWTAuth\Providers\LumenServiceProvider::class);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其次需要增加 Jwt Auth 认证配置。所以在根目录下增加配置文件目录 <code>config</code>，然后增加 <code>auth.php</code> 配置文件，内容从 <code>laravel\lumen-framework\config\auth.php</code> 复制过来。配置如下</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> [</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;defaults&#x27;</span> =&gt; [</span><br><span class="line">        <span class="string">&#x27;guard&#x27;</span> =&gt; env(<span class="string">&#x27;AUTH_GUARD&#x27;</span>, <span class="string">&#x27;api&#x27;</span>),</span><br><span class="line">    ],</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;guards&#x27;</span> =&gt; [</span><br><span class="line">        <span class="string">&#x27;api&#x27;</span> =&gt; [</span><br><span class="line">            <span class="string">&#x27;driver&#x27;</span> =&gt; <span class="string">&#x27;jwt&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;provider&#x27;</span> =&gt; <span class="string">&#x27;users&#x27;</span>,</span><br><span class="line">    ],</span><br><span class="line">   ],</span><br><span class="line"></span><br><span class="line">   <span class="string">&#x27;providers&#x27;</span> =&gt; [</span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="string">&#x27;users&#x27;</span> =&gt; [</span><br><span class="line">        <span class="string">&#x27;driver&#x27;</span> =&gt; <span class="string">&#x27;eloquent&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;model&#x27;</span>  =&gt; \App\User::class,</span><br><span class="line">    ],</span><br><span class="line"></span><br><span class="line">   <span class="string">&#x27;passwords&#x27;</span> =&gt; [</span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">   ],</span><br><span class="line">];</span><br></pre></td></tr></table></figure>
+
+<p>除了这里，还需要看一下包提供的配置。然后创建一个 <code>jwt.php</code> 配置文件就可以了。 最后执行一下命令，生成秘钥</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">php artisan jwt:secret</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><p>门面的服务驱动使用的 <code>eloquent</code>, 所以需要实现 <code>Tymon\JWTAuth\Contracts\JWTSubject</code> 接口</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">User</span> <span class="keyword">extends</span> <span class="title">Model</span> <span class="keyword">implements</span> <span class="title">AuthenticatableContract</span>, <span class="title">AuthorizableContract</span>, <span class="title">JWTSubject</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">use</span> <span class="title">Authenticatable</span>, <span class="title">Authorizable</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * The attributes that are mass assignable.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@var</span> array</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="variable">$fillable</span> = [</span><br><span class="line">        <span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;email&#x27;</span>,</span><br><span class="line">    ];</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * The attributes excluded from the model&#x27;s JSON form.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@var</span> array</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="variable">$hidden</span> = [</span><br><span class="line">        <span class="string">&#x27;password&#x27;</span>,</span><br><span class="line">    ];</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Get the identifier that will be stored in the subject claim of the JWT.</span></span><br><span class="line"><span class="comment">	 *</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> mixed</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getJWTIdentifier</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">$this</span>-&gt;getKey();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Return a key value array, containing any custom claims to be added to the JWT.</span></span><br><span class="line"><span class="comment">	 *</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> array</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getJWTCustomClaims</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		<span class="keyword">return</span> [];</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>创建一个控制器 <code>LoginController</code>，实现如下:</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> <span class="title">Illuminate</span>\<span class="title">Http</span>\<span class="title">Request</span>;</span><br><span class="line"><span class="keyword">use</span> <span class="title">Tymon</span>\<span class="title">JWTAuth</span>\<span class="title">JWTAuth</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LoginController</span> <span class="keyword">extends</span> <span class="title">Controller</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">	<span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">login</span>(<span class="params">Request <span class="variable">$request</span>, JWTAuth <span class="variable">$jwt</span></span>)</span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (! <span class="variable">$token</span> = <span class="variable">$jwt</span>-&gt;attempt(<span class="variable">$request</span>-&gt;only(<span class="string">&#x27;email&#x27;</span>, <span class="string">&#x27;password&#x27;</span>))) &#123;</span><br><span class="line">			<span class="keyword">return</span> response()-&gt;json([<span class="string">&#x27;user_not_found&#x27;</span>], <span class="number">404</span>);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> response()-&gt;json(compact(<span class="string">&#x27;token&#x27;</span>));</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>添加路由</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$router</span>-&gt;post(<span class="string">&#x27;login&#x27;</span>, <span class="string">&#x27;LoginController@login&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>这个要说一下，你的 <code>Users</code> 表结构可以直接用 <code>Laravel Auth</code>，认证实际也是基于 <code>Auth</code> 实现的，所以这一块很轻松。 测试用 <code>Postman</code> 请求一下，可以看到返回的结果。应该是这样的。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;token&quot;</span>: <span class="string">&quot;eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvbG9naW4iLCJpYXQiOjE1NDI2ODExMzgsImV4cCI6MTU0MjY4NDczOCwibmJmIjoxNTQyNjgxMTM4LCJqdGkiOiJHZGp5bFV1ZlpHdzM2cTlPIiwic3ViIjo4LCJwcnYiOiI4N2UwYWYxZWY5ZmQxNTgxMmZkZWM5NzE1M2ExNGUwYjA0NzU0NmFhIn0.oZwsvsY8kfDvcs6ct_IGLzU8JWPDUbTTb6u8OTntsl4&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述便是该包使用的过程，如果有疑问或者遗漏之处请指正。<a target="_blank" rel="noopener" href="http://jwt-auth.com/">Jwt 文档地址</a> </p>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -1225,96 +1336,6 @@
 <h2 id="GO实现"><a href="#GO实现" class="headerlink" title="GO实现"></a>GO实现</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;net&quot;</span></span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;strings&quot;</span></span><br><span class="line">	<span class="string">&quot;crypto/sha1&quot;</span></span><br><span class="line">	<span class="string">&quot;io&quot;</span></span><br><span class="line">	<span class="string">&quot;encoding/base64&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	WEBSOCKET_KEY = <span class="string">&quot;258EAFA5-E914-47DA-95CA-C5AB0DC85B11&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	connect()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">connect</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">//监听</span></span><br><span class="line">	ln, err := net.Listen(<span class="string">&quot;tcp&quot;</span>, <span class="string">&quot;:8000&quot;</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="comment">//接受客户端连接</span></span><br><span class="line">		conn, err := ln.Accept()</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Println(err)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">for</span> &#123;</span><br><span class="line">			handConnect(conn)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handConnect</span><span class="params">(conn net.Conn)</span></span> &#123;</span><br><span class="line">	content := <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">1024</span>)</span><br><span class="line">	n, err := conn.Read(content)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(err)</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println(fmt.Sprintf(<span class="string">&quot;读取%d个字节&quot;</span>, n))</span><br><span class="line"></span><br><span class="line">	header := parseHeaders(<span class="keyword">string</span>(content))</span><br><span class="line">	fmt.Println(header[<span class="string">&quot;Sec-WebSocket-Key&quot;</span>])</span><br><span class="line"></span><br><span class="line">	secret := getSecret(header[<span class="string">&quot;Sec-WebSocket-Key&quot;</span>])</span><br><span class="line"></span><br><span class="line">	response := <span class="string">&quot;HTTP/1.1 101 Web Socket Protocol Handshake\r\n&quot;</span></span><br><span class="line">	response += <span class="string">&quot;Upgrade: websocket\r\n&quot;</span></span><br><span class="line">	response +=<span class="string">&quot;Connection: Upgrade\r\n&quot;</span></span><br><span class="line">	response +=<span class="string">&quot;Sec-WebSocket-Accept: &quot;</span> + secret +<span class="string">&quot;\r\n&quot;</span></span><br><span class="line">	response += <span class="string">&quot;\r\n&quot;</span></span><br><span class="line"></span><br><span class="line">	conn.Write([]<span class="keyword">byte</span>(response))</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">parseHeaders</span><span class="params">(content <span class="keyword">string</span>)</span> <span class="title">map</span>[<span class="title">string</span>]<span class="title">string</span></span> &#123;</span><br><span class="line">	h := strings.Split(content, <span class="string">&quot;\r\n&quot;</span>)</span><br><span class="line">	header := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>, <span class="number">0</span>)</span><br><span class="line">	<span class="keyword">for</span> _, value  := <span class="keyword">range</span> h &#123;</span><br><span class="line">		v := strings.Split(value, <span class="string">&quot;:&quot;</span>)</span><br><span class="line">		<span class="comment">//注意这里切片长度一定要大于2</span></span><br><span class="line">		<span class="keyword">if</span> <span class="built_in">len</span>(v) &gt;= <span class="number">2</span> &#123;</span><br><span class="line">			<span class="comment">//空格也必须去除</span></span><br><span class="line">			header[strings.Trim(v[<span class="number">0</span>], <span class="string">&quot; &quot;</span>)] = strings.Trim(v[<span class="number">1</span>], <span class="string">&quot; &quot;</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span>  header</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getSecret</span><span class="params">(key <span class="keyword">string</span>)</span> <span class="title">string</span></span>&#123;</span><br><span class="line">	key += WEBSOCKET_KEY</span><br><span class="line">	res := sha1.New()</span><br><span class="line">	io.WriteString(res, key)</span><br><span class="line">	<span class="keyword">return</span> base64.StdEncoding.EncodeToString(res.Sum(<span class="literal">nil</span>))</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <p>上面就是简单的实现， 然后就是如何解析frame。</p>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://jaguarjack.github.io/2018/07/06/larvel-auth-not-pass/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/./images/avatar.jpg">
-      <meta itemprop="name" content="JaguarJack">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JaguarJack's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2018/07/06/larvel-auth-not-pass/" class="post-title-link" itemprop="url">laravel 自定义Guards 无法通过登录</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2018-07-06 10:23:04" itemprop="dateCreated datePublished" datetime="2018-07-06T10:23:04Z">2018-07-06</time>
-    </span>
-      <span class="post-meta-item">
-        <span class="post-meta-item-icon">
-          <i class="far fa-calendar-check"></i>
-        </span>
-        <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-06-16 01:05:39" itemprop="dateModified" datetime="2021-06-16T01:05:39Z">2021-06-16</time>
-      </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E5%B7%A5%E5%85%B7%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">工具笔记</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h2 id="Laravel"><a href="#Laravel" class="headerlink" title="Laravel"></a>Laravel</h2><p>问题可能出现的场景 可能就是你没有自己定义登录中间件， 使用默认的auth的时候。</p>
-<p>当我在使用了Laravel的默认的用户认证Trait时候， 并且已经在auth配置文件配置了guards。重写该门面方法。</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="function"><span class="keyword">function</span> <span class="title">guard</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> Auth::guard(<span class="string">&#x27;admin&#x27;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>照理讲当你自定义完该方法， 并且切换了guard之后， 就应该可以了， 可是在并不能通过，尝试了找到了登录验证方法</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="function"><span class="keyword">function</span> <span class="title">sendLoginResponse</span>(<span class="params">Request <span class="variable">$request</span></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="variable">$request</span>-&gt;session()-&gt;regenerate();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">$this</span>-&gt;clearLoginAttempts(<span class="variable">$request</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;authenticated(<span class="variable">$request</span>, <span class="keyword">$this</span>-&gt;guard()-&gt;user())</span><br><span class="line">            ?: redirect()-&gt;intended(<span class="keyword">$this</span>-&gt;redirectPath());</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>我通过打印$this-&gt;gurad()-&gt;user()之后发现已经验证成功， 可是并不能通过， 所以问题出现在哪里呢？登录之后应该会自动跳转到$this-&gt;redirectPath();就是你自定义跳转的页面， 查看该页面的路由， 发现我用了auth的中间件，来看一下auth中间件的做的事儿<br>发现这个参数</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">handle</span>(<span class="params"><span class="variable">$request</span>, <span class="built_in">Closure</span> <span class="variable">$next</span>, ...<span class="variable">$guards</span></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">$this</span>-&gt;authenticate(<span class="variable">$guards</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="variable">$next</span>(<span class="variable">$request</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* Determine if the user is logged in to any of the given guards.</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* <span class="doctag">@param</span>  array  $guards</span></span><br><span class="line"><span class="comment">* <span class="doctag">@return</span> void</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* <span class="doctag">@throws</span> \Illuminate\Auth\AuthenticationException</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">protected</span> <span class="function"><span class="keyword">function</span> <span class="title">authenticate</span>(<span class="params"><span class="keyword">array</span> <span class="variable">$guards</span></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">empty</span>(<span class="variable">$guards</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;auth-&gt;authenticate();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">foreach</span> (<span class="variable">$guards</span> <span class="keyword">as</span> <span class="variable">$guard</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">$this</span>-&gt;auth-&gt;guard(<span class="variable">$guard</span>)-&gt;check()) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;auth-&gt;shouldUse(<span class="variable">$guard</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> AuthenticationException(<span class="string">&#x27;Unauthenticated.&#x27;</span>, <span class="variable">$guards</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><strong>…$gurad</strong>可变参数，这里就没错了， 在auth中间还需要认证guard， 这里在<strong>authenticate</strong>也可以发现，auth中间件默认使用的是auth配置里面default的门面。具体可以查看Auth源码。 这里就不去解释了。但是如果你切换了guard的话， 你就必须加上认证的guards。<br>在你的路由文件这样写 -&gt;middleware(‘auth:admin’);当然从这个中间件来看， 支持多个guard。 具体在文档的 中间件可以查看</p>
 
       
     </div>

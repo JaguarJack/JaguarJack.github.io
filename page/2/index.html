@@ -130,7 +130,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-count">38</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -142,7 +142,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">32</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -183,6 +183,97 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://jaguarjack.github.io/2019/04/19/mac-vertify-failed/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/./images/avatar.jpg">
+      <meta itemprop="name" content="JaguarJack">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JaguarJack's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2019/04/19/mac-vertify-failed/" class="post-title-link" itemprop="url">Mac SSH 连接出现 Host key verification failed 错误解决</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2019-04-18 21:07:56" itemprop="dateCreated datePublished" datetime="2019-04-18T21:07:56Z">2019-04-18</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-06-16 01:05:39" itemprop="dateModified" datetime="2021-06-16T01:05:39Z">2021-06-16</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">工具笔记</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>我们使用 <a href="javascript:;"><strong>ssh</strong></a> 链接 <a href="javascript:;"><strong>linux</strong></a> 主机时，可能出现 “<a href="javascript:;"><strong>Host</strong></a> <a href="javascript:;"><strong>key</strong></a> verification failed.“ 的提示，ssh 连接不成功。<br>可能的提示信息如下:</p>
+<blockquote>
+<p>IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!<br>Someone could be eavesdropping on you right now (man-in-the-middle attack)!<br>It is also possible that the RSA host key has just been changed.<br>The fingerprint for the RSA key sent by the remote host is<br>23:00:20:83:de:02:95:f1:e3:34:be:57:3f:cf:2c:e7.<br>Please contact your system administrator.<br>Add correct host key in /home/xahria/.ssh/known_hosts to get rid of this message.<br>Offending key in /home/xahria/.ssh/known_hosts:8<br>RSA host key for localhost has changed and you have requested strict checking.<br>Host key verification failed.</p>
+</blockquote>
+<p>网上很多的解决方案是：<code>vi ~/.ssh/known_hosts </code> 删除与想要连接的主机相关的行；或者直接删除<code>known_hosts</code> 这个文件。 当然这个方案也是可行的，但并非解决问题的根本办法，因为继续使用，今后还会出现这样的情况，还得再删除。<br>下面简单讲一下这个问题的原理和比较长久的解决方案。<br>用<code>OpenSSH</code>的人都知ssh会把你每个你访问过计算机的公钥(public key)都记录在 <code>~/.ssh/known_hosts</code>。当下次访问相同计算机时，<code>OpenSSH</code> 会核对公钥。如果公钥不同，<code>OpenSSH </code>会发出警告，避免你受到DNS Hijack之类的攻击。<br>SSH 对主机的 public_key 的检查等级是根据 <code>StrictHostKeyChecking</code> 变量来配置的。默认情况下，<code>StrictHostKeyChecking=ask</code>。简单所下它的三种配置值：</p>
+<p>1.<code>StrictHostKeyChecking=no </code>最不安全的级别，当然也没有那么多烦人的提示了，相对安全的内网<a href="javascript:;"><strong>测试</strong></a>时建议使用。如果连接<a href="javascript:;"><strong>server</strong></a>的 key 在本地不存在，那么就自动添加到文件中（默认是known_hosts），并且给出一个警告。</p>
+<p>2.<code>StrictHostKeyChecking=ask</code>  默认的级别，就是出现刚才的提示了。如果连接和key不匹配，给出提示，并拒绝登录。</p>
+<p>3.<code>StrictHostKeyChecking=yes</code>  最安全的级别，如果连接与key不匹配，就拒绝连接，不会提示详细信息。</p>
+<p>对于我来说，在内网的进行的一些测试，为了方便，选择最低的安全级别。在 .ssh/config（或者 /etc/ssh/ssh_config ）中配置：<br> <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"> StrictHostKeyChecking no</span><br><span class="line">UserKnownHostsFile /dev/null</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>（注：这里为了简便，将 knownhostfile 设为 /dev/null，就不保存在 known_hosts 中了）</p>
+</blockquote>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -1118,117 +1209,6 @@ class CorsMiddleware
 ```
 这样就可以解决跨域问题了
 </code></pre>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://jaguarjack.github.io/2018/11/21/lumen-jwt/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/./images/avatar.jpg">
-      <meta itemprop="name" content="JaguarJack">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JaguarJack's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2018/11/21/lumen-jwt/" class="post-title-link" itemprop="url">Lumen 使用 Jwt 过程记录</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2018-11-20 22:58:24" itemprop="dateCreated datePublished" datetime="2018-11-20T22:58:24Z">2018-11-20</time>
-    </span>
-      <span class="post-meta-item">
-        <span class="post-meta-item-icon">
-          <i class="far fa-calendar-check"></i>
-        </span>
-        <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-06-16 01:05:39" itemprop="dateModified" datetime="2021-06-16T01:05:39Z">2021-06-16</time>
-      </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E5%B7%A5%E5%85%B7%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">工具笔记</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>最近想搞一下前后端分离，所以就基于 Vue 想做一下基础的后台管理，后端就选用了 Lumen5.7.*，因为解决方案多，方便。认证就在此基础使用了 Json Web Token(JWT)。这里记录一些使用过程。</p>
-<h3 id="下载-Jwt-包"><a href="#下载-Jwt-包" class="headerlink" title="下载 Jwt 包"></a>下载 Jwt 包</h3><p>修改 <code>composer.json</code></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;require&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;tymon/jwt-auth&quot;</span>: <span class="string">&quot;1.0.*&quot;</span></span><br><span class="line">    &#125;,</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>composer update</p>
-</blockquote>
-<h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><p>修改 <code>bootstrap</code>  目录下 <code>app.php</code> 文件</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"> <span class="variable">$app</span>-&gt;withFacades();</span><br><span class="line"></span><br><span class="line"> <span class="variable">$app</span>-&gt;withEloquent();</span><br><span class="line"></span><br><span class="line"><span class="variable">$app</span>-&gt;routeMiddleware([</span><br><span class="line">     <span class="string">&#x27;auth&#x27;</span> =&gt; App\Http\Middleware\Authenticate::class,</span><br><span class="line"> ]);</span><br><span class="line"> <span class="variable">$app</span>-&gt;register(App\Providers\AppServiceProvider::class);</span><br><span class="line"> <span class="variable">$app</span>-&gt;register(App\Providers\AuthServiceProvider::class);</span><br></pre></td></tr></table></figure>
-
-<p>打开这五行注释。然后进入到 AppServiceProvider 服务注入文件, 注册 Jwt 服务</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">register</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Register Jwt Service</span></span><br><span class="line">    <span class="keyword">$this</span>-&gt;app-&gt;register(\Tymon\JWTAuth\Providers\LumenServiceProvider::class);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>其次需要增加 Jwt Auth 认证配置。所以在根目录下增加配置文件目录 <code>config</code>，然后增加 <code>auth.php</code> 配置文件，内容从 <code>laravel\lumen-framework\config\auth.php</code> 复制过来。配置如下</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> [</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;defaults&#x27;</span> =&gt; [</span><br><span class="line">        <span class="string">&#x27;guard&#x27;</span> =&gt; env(<span class="string">&#x27;AUTH_GUARD&#x27;</span>, <span class="string">&#x27;api&#x27;</span>),</span><br><span class="line">    ],</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;guards&#x27;</span> =&gt; [</span><br><span class="line">        <span class="string">&#x27;api&#x27;</span> =&gt; [</span><br><span class="line">            <span class="string">&#x27;driver&#x27;</span> =&gt; <span class="string">&#x27;jwt&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;provider&#x27;</span> =&gt; <span class="string">&#x27;users&#x27;</span>,</span><br><span class="line">    ],</span><br><span class="line">   ],</span><br><span class="line"></span><br><span class="line">   <span class="string">&#x27;providers&#x27;</span> =&gt; [</span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="string">&#x27;users&#x27;</span> =&gt; [</span><br><span class="line">        <span class="string">&#x27;driver&#x27;</span> =&gt; <span class="string">&#x27;eloquent&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;model&#x27;</span>  =&gt; \App\User::class,</span><br><span class="line">    ],</span><br><span class="line"></span><br><span class="line">   <span class="string">&#x27;passwords&#x27;</span> =&gt; [</span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">   ],</span><br><span class="line">];</span><br></pre></td></tr></table></figure>
-
-<p>除了这里，还需要看一下包提供的配置。然后创建一个 <code>jwt.php</code> 配置文件就可以了。 最后执行一下命令，生成秘钥</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">php artisan jwt:secret</span><br></pre></td></tr></table></figure>
-
-<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><p>门面的服务驱动使用的 <code>eloquent</code>, 所以需要实现 <code>Tymon\JWTAuth\Contracts\JWTSubject</code> 接口</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">User</span> <span class="keyword">extends</span> <span class="title">Model</span> <span class="keyword">implements</span> <span class="title">AuthenticatableContract</span>, <span class="title">AuthorizableContract</span>, <span class="title">JWTSubject</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">use</span> <span class="title">Authenticatable</span>, <span class="title">Authorizable</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * The attributes that are mass assignable.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@var</span> array</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="variable">$fillable</span> = [</span><br><span class="line">        <span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;email&#x27;</span>,</span><br><span class="line">    ];</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * The attributes excluded from the model&#x27;s JSON form.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@var</span> array</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="variable">$hidden</span> = [</span><br><span class="line">        <span class="string">&#x27;password&#x27;</span>,</span><br><span class="line">    ];</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Get the identifier that will be stored in the subject claim of the JWT.</span></span><br><span class="line"><span class="comment">	 *</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> mixed</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getJWTIdentifier</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">$this</span>-&gt;getKey();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Return a key value array, containing any custom claims to be added to the JWT.</span></span><br><span class="line"><span class="comment">	 *</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> array</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getJWTCustomClaims</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		<span class="keyword">return</span> [];</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>创建一个控制器 <code>LoginController</code>，实现如下:</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> <span class="title">Illuminate</span>\<span class="title">Http</span>\<span class="title">Request</span>;</span><br><span class="line"><span class="keyword">use</span> <span class="title">Tymon</span>\<span class="title">JWTAuth</span>\<span class="title">JWTAuth</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LoginController</span> <span class="keyword">extends</span> <span class="title">Controller</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">	<span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">login</span>(<span class="params">Request <span class="variable">$request</span>, JWTAuth <span class="variable">$jwt</span></span>)</span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (! <span class="variable">$token</span> = <span class="variable">$jwt</span>-&gt;attempt(<span class="variable">$request</span>-&gt;only(<span class="string">&#x27;email&#x27;</span>, <span class="string">&#x27;password&#x27;</span>))) &#123;</span><br><span class="line">			<span class="keyword">return</span> response()-&gt;json([<span class="string">&#x27;user_not_found&#x27;</span>], <span class="number">404</span>);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> response()-&gt;json(compact(<span class="string">&#x27;token&#x27;</span>));</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>添加路由</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$router</span>-&gt;post(<span class="string">&#x27;login&#x27;</span>, <span class="string">&#x27;LoginController@login&#x27;</span>);</span><br></pre></td></tr></table></figure>
-
-<p>这个要说一下，你的 <code>Users</code> 表结构可以直接用 <code>Laravel Auth</code>，认证实际也是基于 <code>Auth</code> 实现的，所以这一块很轻松。 测试用 <code>Postman</code> 请求一下，可以看到返回的结果。应该是这样的。</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;token&quot;</span>: <span class="string">&quot;eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvbG9naW4iLCJpYXQiOjE1NDI2ODExMzgsImV4cCI6MTU0MjY4NDczOCwibmJmIjoxNTQyNjgxMTM4LCJqdGkiOiJHZGp5bFV1ZlpHdzM2cTlPIiwic3ViIjo4LCJwcnYiOiI4N2UwYWYxZWY5ZmQxNTgxMmZkZWM5NzE1M2ExNGUwYjA0NzU0NmFhIn0.oZwsvsY8kfDvcs6ct_IGLzU8JWPDUbTTb6u8OTntsl4&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>上述便是该包使用的过程，如果有疑问或者遗漏之处请指正。<a target="_blank" rel="noopener" href="http://jwt-auth.com/">Jwt 文档地址</a> </p>
 
       
     </div>
