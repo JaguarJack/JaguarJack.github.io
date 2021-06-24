@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;jaguarjack.github.io&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Pisces&quot;,&quot;version&quot;:&quot;8.5.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:true,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:true,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:&quot;utterances&quot;,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null,&quot;activeClass&quot;:&quot;utterances&quot;},&quot;motion&quot;:{&quot;enable&quot;:false,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;搜索...&quot;,&quot;empty&quot;:&quot;没有找到任何搜索结果：${query}&quot;,&quot;hits_time&quot;:&quot;找到 ${hits} 个搜索结果（用时 ${time} 毫秒）&quot;,&quot;hits&quot;:&quot;找到 ${hits} 个搜索结果&quot;}}</script><script src="/js/config.js"></script>
+<meta name="description" content="遇到的题目使用 Channel 进行任务编排的题，你可以尝试做一下：有四个 goroutine，编号为 1、2、3、4。每秒钟会有一个 goroutine打印出它自己的编号，要求你编写一个程序，让输出的编号总是按照 1、2、3、4、1、2、3、4、……的顺序打印出来。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go 协程访问 Chan 的疑问">
+<meta property="og:url" content="https://jaguarjack.github.io/2021/06/21/goroutine-chan/index.html">
+<meta property="og:site_name" content="JaguarJack&#39;s Blog">
+<meta property="og:description" content="遇到的题目使用 Channel 进行任务编排的题，你可以尝试做一下：有四个 goroutine，编号为 1、2、3、4。每秒钟会有一个 goroutine打印出它自己的编号，要求你编写一个程序，让输出的编号总是按照 1、2、3、4、1、2、3、4、……的顺序打印出来。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-06-21T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-06-24T03:27:06.297Z">
+<meta property="article:author" content="JaguarJack">
+<meta property="article:tag" content="go">
+<meta property="article:tag" content="goroutine">
+<meta property="article:tag" content="chan">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://jaguarjack.github.io/2021/06/21/goroutine-chan/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;https:&#x2F;&#x2F;jaguarjack.github.io&#x2F;2021&#x2F;06&#x2F;21&#x2F;goroutine-chan&#x2F;&quot;,&quot;path&quot;:&quot;2021&#x2F;06&#x2F;21&#x2F;goroutine-chan&#x2F;&quot;,&quot;title&quot;:&quot;Go 协程访问 Chan 的疑问&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Go 协程访问 Chan 的疑问 | JaguarJack's Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="JaguarJack's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">JaguarJack's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">做人呢最重要的就是开心</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%81%87%E5%88%B0%E7%9A%84%E9%A2%98%E7%9B%AE"><span class="nav-number">1.</span> <span class="nav-text">遇到的题目</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3"><span class="nav-number">1.1.</span> <span class="nav-text">解决</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%96%91%E9%97%AE%E4%BA%A7%E7%94%9F%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="nav-number">2.</span> <span class="nav-text">疑问产生的地方</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A"><span class="nav-number">2.1.</span> <span class="nav-text">解释</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%96%91%E6%83%91%E8%A7%A3%E5%86%B3"><span class="nav-number">3.</span> <span class="nav-text">疑惑解决</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GMP"><span class="nav-number">4.</span> <span class="nav-text">GMP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%BB%E5%A1%9E%E8%AF%B4%E6%98%8E%E4%BB%80%E4%B9%88"><span class="nav-number">5.</span> <span class="nav-text">阻塞说明什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B2%A1%E6%9C%89-time-sleep-%E7%9A%84%E7%BB%93%E6%9E%9C"><span class="nav-number">6.</span> <span class="nav-text">没有 time.sleep 的结果</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="JaguarJack"
+      src="/./images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">JaguarJack</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">39</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">34</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/JaguarJack" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;JaguarJack" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/njphper@gmail.com" title="E-Mail → njphper@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+
+          </div>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://jaguarjack.github.io/2021/06/21/goroutine-chan/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/./images/avatar.jpg">
+      <meta itemprop="name" content="JaguarJack">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JaguarJack's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Go 协程访问 Chan 的疑问
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-06-21 00:00:00" itemprop="dateCreated datePublished" datetime="2021-06-21T00:00:00Z">2021-06-21</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-06-24 03:27:06" itemprop="dateModified" datetime="2021-06-24T03:27:06Z">2021-06-24</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="遇到的题目"><a href="#遇到的题目" class="headerlink" title="遇到的题目"></a>遇到的题目</h2><p>使用 <code>Channel</code> 进行任务编排的题，你可以尝试做一下：有四个 <code>goroutine</code>，编号为 <code>1、2、3、4</code>。每秒钟会有一个 <code>goroutine</code>打印出它自己的编号，要求你编写一个程序，让输出的编号总是按照 <code>1、2、3、4、1、2、3、4、……</code>的顺序打印出来。</p>
+<span id="more"></span>
+<h3 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h3><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">printer</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">    ch := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> i :=<span class="number">1</span>; i &lt;= <span class="number">4</span>; i++ &#123;</span><br><span class="line">        <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(i <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">             time.sleep(time.Duration(i * <span class="number">10</span>) * time.Millisecond)</span><br><span class="line">             <span class="keyword">for</span> &#123;</span><br><span class="line">                 &lt;-ch</span><br><span class="line"></span><br><span class="line">                 fmt.Prinln(i)</span><br><span class="line"></span><br><span class="line">                 time.sleep(time.second)</span><br><span class="line"></span><br><span class="line">                 ch &lt;- <span class="keyword">struct</span>&#123;&#125;&#123;&#125;</span><br><span class="line">             &#125;</span><br><span class="line">        &#125;(i)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ch &lt;- <span class="keyword">struct</span>&#123;&#125;&#123;&#125;</span><br><span class="line"></span><br><span class="line">    time.sleep(time.Minute)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="疑问产生的地方"><a href="#疑问产生的地方" class="headerlink" title="疑问产生的地方"></a>疑问产生的地方</h2><h3 id="解释"><a href="#解释" class="headerlink" title="解释"></a>解释</h3><ul>
+<li>创建一个阻塞的 <code>Chan</code></li>
+<li>创建四个 <code>Goroutine</code>，有前后顺序，保证了第一个（i = 1） <code>Goroutine</code> 可以首先访问 <code>Chan</code></li>
+<li>主 Goroutine 往 Chan 中添加第一个元素</li>
+<li>由于子 <code>Goroutine</code> 启动之后，会 <code>sleep</code>，所以 <code>i=1</code> 的 <code>Goroutine</code> 会最先访问 <code>Chan</code>, 访问之后呢，（其他的 Goroutine 就会阻塞）。 然后输出，输出之后 sleep，在加入元素。</li>
+</ul>
+<p>这段代码在输出之后的确是 1，2，3，4 循环打印。疑惑点在哪里呢？就是在第一个 Goroutine 结束之后，为什么 2，3，4 号 Goroutine 没有去争抢 ch，应该是 2,3,4 随机输出。可是并没有出现这种情况，而是顺序输出。</p>
+<h2 id="疑惑解决"><a href="#疑惑解决" class="headerlink" title="疑惑解决"></a>疑惑解决</h2><p>在此之前，先看一下 <code>src/runtime/chan.go</code> 的 <code>chan</code> 的结构</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> hchan <span class="keyword">struct</span> &#123;</span><br><span class="line">   qcount   <span class="keyword">uint</span>           <span class="comment">// total data in the queue</span></span><br><span class="line">   dataqsiz <span class="keyword">uint</span>           <span class="comment">// size of the circular queue</span></span><br><span class="line">   buf      unsafe.Pointer <span class="comment">// points to an array of dataqsiz elements</span></span><br><span class="line">   elemsize <span class="keyword">uint16</span></span><br><span class="line">   closed   <span class="keyword">uint32</span></span><br><span class="line">   elemtype *_type <span class="comment">// element type</span></span><br><span class="line">   sendx    <span class="keyword">uint</span>   <span class="comment">// send index</span></span><br><span class="line">   recvx    <span class="keyword">uint</span>   <span class="comment">// receive index</span></span><br><span class="line">   recvq    waitq  <span class="comment">// list of recv waiters</span></span><br><span class="line">   sendq    waitq  <span class="comment">// list of send waiters</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">// lock protects all fields in hchan, as well as several</span></span><br><span class="line">   <span class="comment">// fields in sudogs blocked on this channel.</span></span><br><span class="line">   <span class="comment">//</span></span><br><span class="line">   <span class="comment">// Do not change another G&#x27;s status while holding this lock</span></span><br><span class="line">   <span class="comment">// (in particular, do not ready a G), as this can deadlock</span></span><br><span class="line">   <span class="comment">// with stack shrinking.</span></span><br><span class="line">   lock mutex <span class="comment">// 说明 channel 底层也是基于 mutex 实现的</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>主要看 <code>recvq</code> 和 <code>sendq</code>, 这两个是什么呢？</p>
+<ul>
+<li>recvq : 协程队列，等待读取消息的协程队列</li>
+<li>sendq : 协程队列，等待发送消息的协程队列</li>
+</ul>
+<p>这能说明什么呢？这里首先明确下 <code>recvq</code> 是队列结构。再来返回来看上面那段代码，启动<code> Goroutine</code> 其实是延迟的，说明他们是顺序启动的，在 <code>1</code> 号获取到 <code>ch</code> 的值之后，首先阻塞的便是 <code>2</code> 号，那么 <code>2</code> 号便会进入<code>recvq</code>队列，三号四号依次进入队列，阻塞等待唤醒。</p>
+<p>如上面所说，结果是顺序的。因为在 <code>1</code> 号 <code>Goroutine</code> 启动之后，它使用 <code>time.sleep</code>。导致其他 <code>Goroutine</code> 获取 <code>ch</code> 的时候会阻塞。这个阻塞说明什么呢? 如果没有 <code>time.sleep</code>的话，结果又是怎么样的。在这之前先说一下老生常谈的话题</p>
+<h2 id="GMP"><a href="#GMP" class="headerlink" title="GMP"></a>GMP</h2><p>GMP 一直是学习 GO 必须学习的话题。到处都是解析。这里也不做深入解释了。主要看一下 GMP 模型.</p>
+<ul>
+<li>G: 代表 goroutine</li>
+<li>M: 代表 系统线程</li>
+<li>P: 代表 与调度相关的context</li>
+</ul>
+<p>每一个 <code>M</code> 都拥有一个 <code>P</code>，<code>P</code> 也维护一个能运行的 <code>Goroutine</code> 队列，由该 <code>P</code> 绑定的线程执行。</p>
+<h2 id="阻塞说明什么"><a href="#阻塞说明什么" class="headerlink" title="阻塞说明什么"></a>阻塞说明什么</h2><p>当 <code>1</code> 号创建之后，会立即获取 <code>ch</code> 的值，因为主 <code>goroutine </code>已经往 <code>ch </code>里面加入元素，所以此时 <code>ch</code> 是可读。<code>1</code> 号由 由 <code>GMP</code> 模型可以知道，<code>runtime</code> 调度为 <code>running</code>。来执行获取 ch，之后 1 号 time.sleep 阻塞。然后变成 waiting 状态。</p>
+<p>还记得 ch 的两个队列吗？发送和读取，此时 1 号会被放入到发送消息的队列等待唤醒。由于 ch 目前是空的，在 time.sleep 之后才会加入元素。此时2号被创建并且被调度去获取 ch 的值，发现 ch 阻塞之后会被放入 recvq 队列，就是等待读取的队列。<code>3</code> <code>4</code> 号依次。在 1 秒之后，1 号变为可发送状态，向 ch 中发送元素，然后被加入 <code>recvq</code> 队列尾部，此时队列头部的 2 号会立即被唤醒来获取，然后被加入发送队列。如此重复，就可以顺序打印。</p>
+<h2 id="没有-time-sleep-的结果"><a href="#没有-time-sleep-的结果" class="headerlink" title="没有 time.sleep 的结果"></a>没有 time.sleep 的结果</h2><p>1 号 <code>Goroutine</code> 的访问调度和上一步是一样的，主要是在下一步。如果 1 号没有阻塞的话，会发生什么呢？ch 会立马变成可读。那么此时 2 3 4 号 <code>Goroutine</code> 会怎么样？根据 <strong>M:N</strong> 的原则， 2 3 4 应该会被随机分配的 M 调度的 G 队列里面，此时就会发生争抢？那么争抢的结果就是访问是随机的。也就说 2 3 4 中谁先访问了 ch，是不确定的。所以，当你去掉 <code>time.sleep</code> 之后，顺序会变成随机。当然是按照一定的随机顺序打印。因为在确定 2 3 4 访问之后 读取的队列就是确定了，打印的顺序结果就是队列的顺序。</p>
+<p>详细的 <strong>GMP</strong> 是如何调度请查看 <a href="%E8%B0%83%E5%BA%A6%E5%99%A8">https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/#65-%E8%B0%83%E5%BA%A6%E5%99%A8</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>JaguarJack
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://jaguarjack.github.io/2021/06/21/goroutine-chan/" title="Go 协程访问 Chan 的疑问">https://jaguarjack.github.io/2021/06/21/goroutine-chan/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+                <a href="/tags/go/" rel="tag"> <i class="fa fa-tag"></i> go</a>
+                <a href="/tags/goroutine/" rel="tag"> <i class="fa fa-tag"></i> goroutine</a>
+                <a href="/tags/chan/" rel="tag"> <i class="fa fa-tag"></i> chan</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/06/17/go-byte-align/" rel="prev" title="Go 字节对齐">
+                  <i class="fa fa-chevron-left"></i> Go 字节对齐
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JaguarJack</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@next-theme/pjax@0.5.0/pjax.min.js" integrity="sha256-3NkoLDrmHLTYj7csHIZSr0MHAFTXth7Ua/DDt4MRUAg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js" integrity="sha256-EdPgYcPk/IIrw7FYeuJQexva49pVRZNmt3LculEr7zM=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script><script src="/js/pjax.js"></script>
+
+  
+
+
+
+
+  
+  <script data-pjax async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+<script class="next-config" data-name="utterances" type="application/json">{&quot;enable&quot;:true,&quot;repo&quot;:&quot;JaguarJack&#x2F;JaguarJack.github.io&quot;,&quot;issue_term&quot;:&quot;pathname&quot;,&quot;theme&quot;:&quot;github-light&quot;}</script>
+<script src="/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
