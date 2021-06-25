@@ -27,7 +27,7 @@
 <meta property="og:description" content="遇到的题目使用 Channel 进行任务编排的题，你可以尝试做一下：有四个 goroutine，编号为 1、2、3、4。每秒钟会有一个 goroutine打印出它自己的编号，要求你编写一个程序，让输出的编号总是按照 1、2、3、4、1、2、3、4、……的顺序打印出来。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-06-21T00:00:00.000Z">
-<meta property="article:modified_time" content="2021-06-24T03:27:06.297Z">
+<meta property="article:modified_time" content="2021-06-25T01:38:17.503Z">
 <meta property="article:author" content="JaguarJack">
 <meta property="article:tag" content="go">
 <meta property="article:tag" content="goroutine">
@@ -232,7 +232,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-06-24 03:27:06" itemprop="dateModified" datetime="2021-06-24T03:27:06Z">2021-06-24</time>
+        <time title="修改时间：2021-06-25 01:38:17" itemprop="dateModified" datetime="2021-06-25T01:38:17Z">2021-06-25</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -288,7 +288,7 @@
 <li>P: 代表 与调度相关的context</li>
 </ul>
 <p>每一个 <code>M</code> 都拥有一个 <code>P</code>，<code>P</code> 也维护一个能运行的 <code>Goroutine</code> 队列，由该 <code>P</code> 绑定的线程执行。</p>
-<h2 id="阻塞说明什么"><a href="#阻塞说明什么" class="headerlink" title="阻塞说明什么"></a>阻塞说明什么</h2><p>当 <code>1</code> 号创建之后，会立即获取 <code>ch</code> 的值，因为主 <code>goroutine </code>已经往 <code>ch </code>里面加入元素，所以此时 <code>ch</code> 是可读。<code>1</code> 号由 由 <code>GMP</code> 模型可以知道，<code>runtime</code> 调度为 <code>running</code>。来执行获取 ch，之后 1 号 time.sleep 阻塞。然后变成 waiting 状态。</p>
+<h2 id="阻塞说明什么"><a href="#阻塞说明什么" class="headerlink" title="阻塞说明什么"></a>阻塞说明什么</h2><p>当 <code>1</code> 号创建之后，会立即获取 <code>ch</code> 的值，因为主 <code>goroutine </code>已经往 <code>ch </code>里面加入元素，所以此时 <code>ch</code> 是可读。由 <code>GMP</code> 模型可以知道，<code>1</code> 号由 <code>runtime</code> 调度为 <code>running</code>。来执行获取 ch，之后 1 号 time.sleep 阻塞。然后变成 waiting 状态。</p>
 <p>还记得 ch 的两个队列吗？发送和读取，此时 1 号会被放入到发送消息的队列等待唤醒。由于 ch 目前是空的，在 time.sleep 之后才会加入元素。此时2号被创建并且被调度去获取 ch 的值，发现 ch 阻塞之后会被放入 recvq 队列，就是等待读取的队列。<code>3</code> <code>4</code> 号依次。在 1 秒之后，1 号变为可发送状态，向 ch 中发送元素，然后被加入 <code>recvq</code> 队列尾部，此时队列头部的 2 号会立即被唤醒来获取，然后被加入发送队列。如此重复，就可以顺序打印。</p>
 <h2 id="没有-time-sleep-的结果"><a href="#没有-time-sleep-的结果" class="headerlink" title="没有 time.sleep 的结果"></a>没有 time.sleep 的结果</h2><p>1 号 <code>Goroutine</code> 的访问调度和上一步是一样的，主要是在下一步。如果 1 号没有阻塞的话，会发生什么呢？ch 会立马变成可读。那么此时 2 3 4 号 <code>Goroutine</code> 会怎么样？根据 <strong>M:N</strong> 的原则， 2 3 4 应该会被随机分配的 M 调度的 G 队列里面，此时就会发生争抢？那么争抢的结果就是访问是随机的。也就说 2 3 4 中谁先访问了 ch，是不确定的。所以，当你去掉 <code>time.sleep</code> 之后，顺序会变成随机。当然是按照一定的随机顺序打印。因为在确定 2 3 4 访问之后 读取的队列就是确定了，打印的顺序结果就是队列的顺序。</p>
 <p>详细的 <strong>GMP</strong> 是如何调度请查看 <a href="%E8%B0%83%E5%BA%A6%E5%99%A8">https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/#65-%E8%B0%83%E5%BA%A6%E5%99%A8</a></p>
